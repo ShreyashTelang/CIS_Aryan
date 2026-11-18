@@ -1,0 +1,2132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Playfair Cipher Simulator | Cryptography & Information Security</title>
+  <style>
+    /* CSS Variables & Theme Configuration */
+    :root {
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --font-mono: ui-monospace, "SF Mono", "Cascadia Code", "Source Code Pro", Menlo, Consolas, "Liberation Mono", monospace;
+      
+      /* Light Theme (Engineering Graph-Paper Aesthetic) */
+      --bg-page: #f6f8fb;
+      --bg-surface: #ffffff;
+      --bg-surface-alt: #f1f5f9;
+      --bg-card: #ffffff;
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --text-faint: #94a3b8;
+      --border-subtle: #cbd5e1;
+      --border-strong: #94a3b8;
+      
+      /* Graph paper grid lines */
+      --grid-line-1: rgba(14, 116, 144, 0.08);
+      --grid-line-2: rgba(14, 116, 144, 0.16);
+      
+      /* Accent & Rule Colors */
+      --accent-primary: #0284c7;
+      --accent-hover: #0369a1;
+      --accent-soft: rgba(2, 132, 199, 0.12);
+      
+      /* Pair Highlighting */
+      --color-in1: #2563eb;       /* Royal Blue */
+      --color-in1-bg: #dbeafe;
+      --color-in2: #7c3aed;       /* Purple */
+      --color-in2-bg: #ede9fe;
+      --color-out1: #059669;      /* Emerald Green */
+      --color-out1-bg: #d1fae5;
+      --color-out2: #d97706;      /* Amber Orange */
+      --color-out2-bg: #fef3c7;
+      
+      --color-keyword-cell: #fffbeb;
+      --color-keyword-border: #fcd34d;
+      --color-keyword-tag: #b45309;
+
+      --svg-rect-fill: rgba(2, 132, 199, 0.08);
+      --svg-rect-stroke: #0284c7;
+      --svg-line-stroke: #475569;
+
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+    }
+
+    [data-theme="dark"] {
+      /* Dark Theme (Blueprint Cyber Graph Paper) */
+      --bg-page: #0b0f19;
+      --bg-surface: #111827;
+      --bg-surface-alt: #1a2234;
+      --bg-card: #141d2e;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-faint: #64748b;
+      --border-subtle: #2d3b55;
+      --border-strong: #475569;
+      
+      /* Dark Grid lines */
+      --grid-line-1: rgba(56, 189, 248, 0.06);
+      --grid-line-2: rgba(56, 189, 248, 0.12);
+      
+      --accent-primary: #38bdf8;
+      --accent-hover: #7dd3fc;
+      --accent-soft: rgba(56, 189, 248, 0.15);
+      
+      --color-in1: #60a5fa;
+      --color-in1-bg: rgba(37, 99, 235, 0.25);
+      --color-in2: #a78bfa;
+      --color-in2-bg: rgba(124, 58, 237, 0.25);
+      --color-out1: #34d399;
+      --color-out1-bg: rgba(5, 150, 105, 0.25);
+      --color-out2: #fbbf24;
+      --color-out2-bg: rgba(217, 119, 6, 0.25);
+      
+      --color-keyword-cell: rgba(251, 191, 36, 0.08);
+      --color-keyword-border: rgba(251, 191, 36, 0.35);
+      --color-keyword-tag: #fbbf24;
+
+      --svg-rect-fill: rgba(56, 189, 248, 0.12);
+      --svg-rect-stroke: #38bdf8;
+      --svg-line-stroke: #94a3b8;
+
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Base Reset & Graph-Paper Background */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--bg-page);
+      background-image: 
+        linear-gradient(var(--grid-line-1) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-line-1) 1px, transparent 1px),
+        linear-gradient(var(--grid-line-2) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-line-2) 1px, transparent 1px);
+      background-size: 20px 20px, 20px 20px, 100px 100px, 100px 100px;
+      color: var(--text-main);
+      min-height: 100vh;
+      line-height: 1.5;
+      padding: 1.25rem;
+      transition: background-color 0.25s ease, color 0.25s ease;
+    }
+
+    :focus-visible {
+      outline: 2px solid var(--accent-primary);
+      outline-offset: 2px;
+    }
+
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    /* Header & Navigation Bar */
+    header {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 1rem 1.5rem;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .brand-title {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .brand-icon {
+      width: 36px;
+      height: 36px;
+      background: var(--accent-soft);
+      color: var(--accent-primary);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 1.15rem;
+    }
+
+    .brand-title h1 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--text-main);
+      letter-spacing: -0.02em;
+    }
+
+    .brand-title p {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    /* Theme Toggle & Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      padding: 0.5rem 0.9rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-surface);
+      color: var(--text-main);
+      transition: all 0.15s ease-in-out;
+      min-height: 40px;
+      user-select: none;
+    }
+
+    .btn:hover {
+      background: var(--bg-surface-alt);
+      border-color: var(--border-strong);
+    }
+
+    .btn-primary {
+      background: var(--accent-primary);
+      color: #ffffff;
+      border-color: var(--accent-primary);
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+      border-color: var(--accent-hover);
+      color: #ffffff;
+    }
+
+    .btn-icon {
+      padding: 0.5rem;
+      min-width: 40px;
+    }
+
+    /* Layout Grid */
+    .simulator-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.25fr;
+      gap: 1.5rem;
+      align-items: start;
+    }
+
+    @media (max-width: 1024px) {
+      .simulator-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Panels & Cards */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 1.25rem;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+      position: relative;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px dashed var(--border-subtle);
+      padding-bottom: 0.75rem;
+    }
+
+    .card-title {
+      font-size: 1rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .card-title svg {
+      color: var(--accent-primary);
+    }
+
+    /* Mode Segmented Control */
+    .mode-switch-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--bg-surface-alt);
+      padding: 0.25rem;
+      border-radius: 8px;
+      border: 1px solid var(--border-subtle);
+    }
+
+    .mode-btn {
+      flex: 1;
+      padding: 0.45rem 1rem;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      font-weight: 700;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      transition: all 0.2s ease;
+    }
+
+    .mode-btn.active {
+      background: var(--bg-surface);
+      color: var(--accent-primary);
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* Form Fields */
+    .field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .field-label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .field-hint {
+      font-size: 0.75rem;
+      color: var(--text-faint);
+      font-weight: 400;
+      text-transform: none;
+    }
+
+    .input-field {
+      width: 100%;
+      padding: 0.65rem 0.85rem;
+      font-family: var(--font-mono);
+      font-size: 0.95rem;
+      background: var(--bg-surface);
+      color: var(--text-main);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      transition: border-color 0.15s ease;
+      text-transform: uppercase;
+    }
+
+    .input-field:focus {
+      border-color: var(--accent-primary);
+    }
+
+    textarea.input-field {
+      resize: vertical;
+      min-height: 70px;
+    }
+
+    .settings-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 0.75rem;
+      align-items: end;
+    }
+
+    .filler-box {
+      width: 65px;
+      text-align: center;
+      font-weight: 700;
+    }
+
+    /* Quick Preset Selector */
+    .preset-selector {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .preset-btn {
+      background: var(--bg-surface-alt);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+      border-radius: 6px;
+      padding: 0.25rem 0.6rem;
+      font-size: 0.75rem;
+      font-family: var(--font-mono);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .preset-btn:hover {
+      color: var(--accent-primary);
+      border-color: var(--accent-primary);
+    }
+
+    /* 5x5 Key Matrix Container */
+    .matrix-section {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .matrix-wrapper {
+      position: relative;
+      display: inline-block;
+      margin: 0 auto;
+      padding: 0.5rem;
+      background: var(--bg-surface-alt);
+      border: 2px solid var(--border-strong);
+      border-radius: 12px;
+      box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.04);
+      user-select: none;
+    }
+
+    /* Row & Column coordinate indicators */
+    .grid-container {
+      display: grid;
+      grid-template-columns: 28px repeat(5, 54px);
+      grid-template-rows: 28px repeat(5, 54px);
+      gap: 6px;
+    }
+
+    @media (max-width: 480px) {
+      .grid-container {
+        grid-template-columns: 20px repeat(5, 42px);
+        grid-template-rows: 20px repeat(5, 42px);
+        gap: 4px;
+      }
+    }
+
+    .header-cell {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-faint);
+    }
+
+    .matrix-cell {
+      position: relative;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--text-main);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: var(--shadow-sm);
+    }
+
+    @media (max-width: 480px) {
+      .matrix-cell {
+        font-size: 1.1rem;
+      }
+    }
+
+    .matrix-cell .coord-tag {
+      position: absolute;
+      bottom: 2px;
+      right: 4px;
+      font-size: 0.55rem;
+      color: var(--text-faint);
+      font-weight: 500;
+    }
+
+    /* Keyword highlight badge */
+    .matrix-cell.is-keyword {
+      background: var(--color-keyword-cell);
+      border-color: var(--color-keyword-border);
+    }
+
+    .matrix-cell.is-keyword::before {
+      content: "•";
+      position: absolute;
+      top: 1px;
+      left: 4px;
+      font-size: 0.9rem;
+      color: var(--color-keyword-tag);
+      line-height: 1;
+    }
+
+    /* Active Highlight States */
+    .matrix-cell.cell-in-1 {
+      background: var(--color-in1-bg) !important;
+      border: 2px solid var(--color-in1) !important;
+      color: var(--color-in1) !important;
+      transform: scale(1.05);
+      z-index: 5;
+    }
+
+    .matrix-cell.cell-in-2 {
+      background: var(--color-in2-bg) !important;
+      border: 2px solid var(--color-in2) !important;
+      color: var(--color-in2) !important;
+      transform: scale(1.05);
+      z-index: 5;
+    }
+
+    .matrix-cell.cell-out-1 {
+      background: var(--color-out1-bg) !important;
+      border: 2px dashed var(--color-out1) !important;
+      color: var(--color-out1) !important;
+      transform: scale(1.05);
+      z-index: 6;
+    }
+
+    .matrix-cell.cell-out-2 {
+      background: var(--color-out2-bg) !important;
+      border: 2px dashed var(--color-out2) !important;
+      color: var(--color-out2) !important;
+      transform: scale(1.05);
+      z-index: 6;
+    }
+
+    /* Overlap states */
+    .matrix-cell.cell-in-1.cell-out-2,
+    .matrix-cell.cell-in-2.cell-out-1 {
+      box-shadow: 0 0 0 3px var(--accent-primary);
+    }
+
+    /* SVG Overlay Layer for Rectangle & Line visualizations */
+    .matrix-svg-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    /* Matrix Legend */
+    .matrix-legend {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.75rem;
+      font-size: 0.75rem;
+      font-family: var(--font-mono);
+      margin-top: 0.25rem;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      color: var(--text-muted);
+    }
+
+    .legend-swatch {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+      display: inline-block;
+    }
+
+    /* Right Column: Digraphs, Player & Steps */
+    .digraphs-container {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .digraph-chips-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      min-height: 40px;
+      align-items: center;
+    }
+
+    .digraph-chip {
+      padding: 0.3rem 0.65rem;
+      border-radius: 6px;
+      background: var(--bg-surface-alt);
+      border: 1px solid var(--border-subtle);
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      position: relative;
+    }
+
+    .digraph-chip:hover {
+      border-color: var(--accent-primary);
+      color: var(--accent-primary);
+    }
+
+    .digraph-chip.active {
+      background: var(--accent-soft);
+      border-color: var(--accent-primary);
+      color: var(--accent-primary);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .digraph-chip.completed {
+      background: var(--bg-surface);
+      color: var(--color-out1);
+      border-color: var(--color-out1);
+    }
+
+    .digraph-chip .chip-sub {
+      font-size: 0.65rem;
+      font-weight: 400;
+      color: var(--text-faint);
+      margin-left: 0.25rem;
+    }
+
+    /* Rule Explanation Callout Banner */
+    .rule-banner {
+      background: var(--bg-surface-alt);
+      border-left: 4px solid var(--accent-primary);
+      border-radius: 0 8px 8px 0;
+      padding: 0.9rem 1.1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      transition: all 0.2s ease;
+    }
+
+    .rule-banner-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+
+    .rule-pill {
+      font-size: 0.7rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 0.2rem 0.55rem;
+      border-radius: 4px;
+      background: var(--accent-soft);
+      color: var(--accent-primary);
+      font-family: var(--font-mono);
+    }
+
+    .rule-pair-summary {
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+
+    .rule-explanation-text {
+      font-size: 0.875rem;
+      color: var(--text-main);
+      line-height: 1.45;
+    }
+
+    /* Player Controls */
+    .controls-panel {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+    }
+
+    .btn-group {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+    }
+
+    .speed-control {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8rem;
+      font-family: var(--font-mono);
+      color: var(--text-muted);
+    }
+
+    .speed-control select {
+      background: var(--bg-surface-alt);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-main);
+      padding: 0.25rem 0.5rem;
+      border-radius: 6px;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+
+    .step-counter {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+
+    /* Output Stream Banner */
+    .output-section {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .output-box-wrapper {
+      position: relative;
+    }
+
+    .output-display {
+      width: 100%;
+      min-height: 52px;
+      padding: 0.75rem 1rem;
+      background: var(--bg-surface-alt);
+      border: 2px solid var(--border-subtle);
+      border-radius: 8px;
+      font-family: var(--font-mono);
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--accent-primary);
+      letter-spacing: 0.1em;
+      word-break: break-all;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .output-pair-token {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 4px;
+      padding: 0.15rem 0.4rem;
+      display: inline-block;
+    }
+
+    .output-pair-token.latest {
+      border-color: var(--color-out1);
+      color: var(--color-out1);
+      box-shadow: 0 0 8px rgba(5, 150, 105, 0.3);
+    }
+
+    .output-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .filler-note {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+      background: var(--bg-surface-alt);
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+      border-left: 3px solid var(--border-strong);
+    }
+
+    /* Digraph Table */
+    .table-container {
+      max-height: 240px;
+      overflow-y: auto;
+      overflow-x: auto;
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+    }
+
+    table.cipher-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      text-align: left;
+    }
+
+    table.cipher-table th {
+      background: var(--bg-surface-alt);
+      padding: 0.6rem 0.75rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border-subtle);
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+
+    table.cipher-table td {
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid var(--border-subtle);
+      color: var(--text-main);
+    }
+
+    table.cipher-table tr.active-row {
+      background: var(--accent-soft);
+      font-weight: 700;
+    }
+
+    table.cipher-table tr:hover {
+      background: var(--bg-surface-alt);
+    }
+
+    /* Explanation & Cryptanalysis Accordion */
+    .theory-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .theory-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1.25rem;
+    }
+
+    .theory-card {
+      background: var(--bg-surface-alt);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .theory-card h3 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--accent-primary);
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .theory-card p, .theory-card ul {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.55;
+    }
+
+    .theory-card ul {
+      padding-left: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .theory-card code {
+      font-family: var(--font-mono);
+      background: var(--bg-surface);
+      padding: 0.1rem 0.3rem;
+      border-radius: 4px;
+      border: 1px solid var(--border-subtle);
+      font-size: 0.8rem;
+    }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--text-faint);
+      font-family: var(--font-mono);
+      padding: 1rem 0 2rem;
+    }
+
+    /* Helper styles */
+    .empty-state {
+      padding: 1.5rem;
+      text-align: center;
+      color: var(--text-faint);
+      font-size: 0.875rem;
+      font-family: var(--font-mono);
+    }
+
+    /* Subtle pulse animation for active cell */
+    @keyframes pulse-ring {
+      0% { transform: scale(0.98); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(0.98); }
+    }
+  </style>
+</head>
+<body data-theme="light">
+
+  <div class="container">
+    <!-- Header -->
+    <header>
+      <div class="brand-title">
+        <div class="brand-icon" aria-hidden="true">PF</div>
+        <div>
+          <h1>Playfair Cipher Simulator</h1>
+          <p>Cryptography & Information Security (CIS) Syllabus Interactive Tool</p>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <!-- Preset dropdown -->
+        <div class="preset-selector">
+          <span style="font-size: 0.75rem; font-weight: 600; color: var(--text-faint);">PRESETS:</span>
+          <button type="button" class="preset-btn" onclick="applyPreset('MONARCHY', 'INSTRUMENTS')">Monarchy (Default)</button>
+          <button type="button" class="preset-btn" onclick="applyPreset('PLAYFAIR', 'BALLOONS')">Repeated Letter (LL)</button>
+          <button type="button" class="preset-btn" onclick="applyPreset('SECRETKEY', 'HIDETHEGOLDINTHEFOREST')">Military Classic</button>
+        </div>
+
+        <!-- Light / Dark Mode Toggle -->
+        <button type="button" class="btn btn-icon" id="themeToggleBtn" aria-label="Toggle dark mode" title="Toggle Light/Dark Theme">
+          <svg id="themeIconSun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+          <svg id="themeIconMoon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Simulator Grid -->
+    <main class="simulator-grid">
+      <!-- Left Column: Inputs & Key Matrix -->
+      <section class="card" aria-label="Cipher Configuration & Key Matrix">
+        <div class="card-header">
+          <span class="card-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+            Cipher Setup
+          </span>
+          <!-- Mode Toggle -->
+          <div class="mode-switch-wrapper" role="radiogroup" aria-label="Cipher Operation Mode">
+            <button type="button" class="mode-btn active" id="modeEncryptBtn" onclick="setMode('encrypt')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+              Encrypt
+            </button>
+            <button type="button" class="mode-btn" id="modeDecryptBtn" onclick="setMode('decrypt')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></svg>
+              Decrypt
+            </button>
+          </div>
+        </div>
+
+        <!-- Keyword and Filler Inputs -->
+        <div class="settings-row">
+          <div class="field-group">
+            <label class="field-label" for="keywordInput">
+              Keyword (Letters only)
+              <span class="field-hint" id="keywordSanitizedHint">Duplicates dropped & J &rarr; I</span>
+            </label>
+            <input type="text" id="keywordInput" class="input-field" value="MONARCHY" placeholder="ENTER KEYWORD (E.G. MONARCHY)" autocomplete="off" spellcheck="false">
+          </div>
+
+          <div class="field-group">
+            <label class="field-label" for="fillerInput">
+              Filler
+              <span class="field-hint">Default: X</span>
+            </label>
+            <input type="text" id="fillerInput" class="input-field filler-box" maxlength="1" value="X" autocomplete="off" spellcheck="false" title="Filler letter for repeated letters and odd length padding">
+          </div>
+        </div>
+
+        <!-- Message Input -->
+        <div class="field-group">
+          <label class="field-label" for="messageInput">
+            <span id="messageLabelText">Plaintext Message</span>
+            <span class="field-hint" id="messageCharCount">11 letters</span>
+          </label>
+          <textarea id="messageInput" class="input-field" placeholder="Type your message here..." spellcheck="false">INSTRUMENTS</textarea>
+        </div>
+
+        <!-- 5x5 Matrix Display -->
+        <div class="matrix-section">
+          <div class="card-header" style="border: none; padding-bottom: 0;">
+            <span class="card-title" style="font-size: 0.85rem;">
+              5&times;5 Key Matrix (I &amp; J Merged)
+            </span>
+            <span style="font-size: 0.75rem; color: var(--text-faint); font-family: var(--font-mono);">
+              25 Alphabet Cells
+            </span>
+          </div>
+
+          <div class="matrix-wrapper" id="matrixWrapper">
+            <!-- Dynamic SVG Overlay for Rectangle/Line Highlights -->
+            <svg class="matrix-svg-overlay" id="matrixSvg">
+              <defs>
+                <marker id="arrowhead" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                  <polygon points="0 0, 6 3, 0 6" fill="var(--svg-line-stroke)"></polygon>
+                </marker>
+                <marker id="arrowhead-out1" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                  <polygon points="0 0, 6 3, 0 6" fill="var(--color-out1)"></polygon>
+                </marker>
+                <marker id="arrowhead-out2" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                  <polygon points="0 0, 6 3, 0 6" fill="var(--color-out2)"></polygon>
+                </marker>
+              </defs>
+              <g id="svgShapesGroup"></g>
+            </svg>
+
+            <!-- 5x5 Grid with Column/Row Headers -->
+            <div class="grid-container" id="gridContainer" role="grid" aria-label="Playfair 5x5 Matrix">
+              <!-- Top Left Empty -->
+              <div class="header-cell"></div>
+              <!-- Column Headers 0 to 4 -->
+              <div class="header-cell">C0</div>
+              <div class="header-cell">C1</div>
+              <div class="header-cell">C2</div>
+              <div class="header-cell">C3</div>
+              <div class="header-cell">C4</div>
+
+              <!-- Rows will be injected by JavaScript -->
+            </div>
+          </div>
+
+          <!-- Color Legend -->
+          <div class="matrix-legend">
+            <span class="legend-item">
+              <span class="legend-swatch" style="background: var(--color-in1);"></span> Input 1
+            </span>
+            <span class="legend-item">
+              <span class="legend-swatch" style="background: var(--color-in2);"></span> Input 2
+            </span>
+            <span class="legend-item">
+              <span class="legend-swatch" style="background: var(--color-out1);"></span> Output 1
+            </span>
+            <span class="legend-item">
+              <span class="legend-swatch" style="background: var(--color-out2);"></span> Output 2
+            </span>
+            <span class="legend-item">
+              <span class="legend-swatch" style="background: var(--color-keyword-border); border: 1px solid var(--color-keyword-tag);"></span> • Keyword Letter
+            </span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right Column: Digraphs, Step Player, and Output Stream -->
+      <section class="card" aria-label="Digraph Stepper & Output">
+        <div class="card-header">
+          <span class="card-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+            </svg>
+            Digraph Stepper &amp; Execution
+          </span>
+          <span class="step-counter" id="stepCounterDisplay">Step 0 of 0</span>
+        </div>
+
+        <!-- Digraph Preparation Chips -->
+        <div class="digraphs-container">
+          <div class="field-label">
+            <span>Prepared Digraphs</span>
+            <span class="field-hint" id="digraphPrepHint">Split in pairs &bull; duplicates padded</span>
+          </div>
+          <div class="digraph-chips-list" id="digraphChipsList">
+            <!-- Digraph chips populated via JS -->
+          </div>
+        </div>
+
+        <!-- Active Rule Explanation Banner -->
+        <div class="rule-banner" id="ruleBanner" role="region" aria-live="polite">
+          <div class="rule-banner-header">
+            <span class="rule-pill" id="rulePill">READY</span>
+            <span class="rule-pair-summary" id="rulePairSummary">Press "Next Pair" or "Auto Play"</span>
+          </div>
+          <div class="rule-explanation-text" id="ruleExplanationText">
+            The Playfair cipher encrypts pairs of letters (digraphs) geometrically using the 5&times;5 matrix above.
+          </div>
+        </div>
+
+        <!-- Step Player Controls -->
+        <div class="controls-panel">
+          <div class="btn-group">
+            <button type="button" class="btn" id="resetBtn" onclick="resetAnimation()" title="Reset to Step 0">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+              Reset
+            </button>
+            <button type="button" class="btn" id="prevBtn" onclick="prevStep()" title="Previous Pair">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+              Prev
+            </button>
+            <button type="button" class="btn btn-primary" id="playPauseBtn" onclick="togglePlayPause()" title="Auto Play or Pause">
+              <svg id="playIcon" width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+              <svg id="pauseIcon" width="15" height="15" viewBox="0 0 24 24" fill="currentColor" style="display: none;"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+              <span id="playPauseText">Auto Play</span>
+            </button>
+            <button type="button" class="btn" id="nextBtn" onclick="nextStep()" title="Next Pair">
+              Next
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </button>
+            <button type="button" class="btn" id="showResultBtn" onclick="showResult()" title="Instantly complete all pairs">
+              Show Result
+            </button>
+          </div>
+
+          <div class="speed-control">
+            <label for="speedSelect">Speed:</label>
+            <select id="speedSelect" onchange="updateSpeed()">
+              <option value="2000">0.5&times; (Slow)</option>
+              <option value="1200" selected>1.0&times; (Normal)</option>
+              <option value="600">2.0&times; (Fast)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Output Result Section -->
+        <div class="output-section">
+          <div class="field-label">
+            <span id="outputLabelText">Cumulative Output Ciphertext</span>
+            <span class="field-hint" id="outputStats">0 / 0 pairs processed</span>
+          </div>
+
+          <div class="output-box-wrapper">
+            <div class="output-display" id="outputDisplay" aria-live="polite">
+              <span style="color: var(--text-faint); font-size: 0.9rem; font-weight: 400;">(Output appears step-by-step)</span>
+            </div>
+          </div>
+
+          <div class="output-actions">
+            <button type="button" class="btn" id="useResultBtn" onclick="useResultAsInput()" title="Transfer output to input and switch mode">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>
+              Use result as input &amp; switch mode
+            </button>
+            <button type="button" class="btn" id="copyResultBtn" onclick="copyOutputText()" title="Copy output string">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+              Copy
+            </button>
+          </div>
+
+          <div class="filler-note" id="fillerNote">
+            <strong>Note on Round-Trip Decryption:</strong> Decryption restores the prepared digraph sequence. If any filler letters (<code id="fillerLetterDisplay">X</code>) were inserted during message preparation (between duplicate letters or as odd-length padding), they will be present in the decrypted output and must be removed by hand.
+          </div>
+        </div>
+
+        <!-- Step-by-Step Digraph Transformation Table -->
+        <div class="field-group">
+          <div class="field-label">
+            <span>Digraph Transformation Table</span>
+            <span class="field-hint">Side-by-side verification</span>
+          </div>
+          <div class="table-container">
+            <table class="cipher-table" id="cipherTable">
+              <thead>
+                <tr>
+                  <th style="width: 50px;">Pair #</th>
+                  <th style="width: 90px;">Input</th>
+                  <th style="width: 140px;">Rule</th>
+                  <th>Coordinates &amp; Shift</th>
+                  <th style="width: 90px;">Output</th>
+                  <th style="width: 120px;">Cumulative</th>
+                </tr>
+              </thead>
+              <tbody id="cipherTableBody">
+                <!-- Dynamically generated rows -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Theoretical Explanation & Cryptanalysis Section -->
+    <article class="theory-section" aria-label="Theory and Cryptanalysis">
+      <div class="card-header">
+        <span class="card-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+          </svg>
+          Cryptography &amp; Information Security Syllabus: Playfair Cipher Analysis
+        </span>
+      </div>
+
+      <div class="theory-grid">
+        <!-- How it works -->
+        <div class="theory-card">
+          <h3>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+            How the Algorithm Operates
+          </h3>
+          <p>
+            Invented in 1854 by Charles Wheatstone and promoted by Lord Playfair, the Playfair cipher was the first practical <strong>digraphic substitution cipher</strong> used for tactical field communications.
+          </p>
+          <ul>
+            <li><strong>5&times;5 Matrix:</strong> 25 cells accommodate the 26-letter Latin alphabet by consolidating <code>I</code> and <code>J</code> into one cell. The keyword letters (duplicates removed) fill the start, followed by the unused alphabet letters in order.</li>
+            <li><strong>Digraph Preparation:</strong> The plaintext is divided into two-letter pairs. If a pair contains identical letters (e.g., <code>LL</code>), a filler (usually <code>X</code>) is inserted between them. If the total length is odd, the trailing character is padded with the filler.</li>
+            <li><strong>Three Geometric Rules:</strong>
+              <ul>
+                <li><em>Same Row:</em> Shift each letter 1 position right (wrap around). Decrypt: 1 position left.</li>
+                <li><em>Same Column:</em> Shift each letter 1 position down (wrap around). Decrypt: 1 position up.</li>
+                <li><em>Rectangle:</em> Swap each letter with the one in its own row at the other letter's column. Decrypt: exactly the same swap!</li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Security & Cryptanalysis -->
+        <div class="theory-card">
+          <h3>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+            Why Playfair Is Cryptographically Weak
+          </h3>
+          <p>
+            While Playfair substantially outperforms single-letter monoalphabetic ciphers (e.g. Caesar, Affine), it remains vulnerable to modern and classical cryptanalysis:
+          </p>
+          <ul>
+            <li><strong>Hides Single-Letter but NOT Digraph Frequencies:</strong> Instead of 26 single-letter frequencies, there are $25 \times 25 = 625$ (or $25 \times 24 = 600$ without identical pairs) digraphs. Common English bigrams such as <code>TH</code>, <code>HE</code>, <code>IN</code>, <code>ER</code>, <code>AN</code>, and <code>RE</code> produce noticeable frequency spikes in the ciphertext.</li>
+            <li><strong>Symmetry &amp; Reciprocity:</strong> If digraph <code>AB</code> encrypts to <code>CD</code> via the rectangle rule, then <code>BA</code> inevitably encrypts to <code>DC</code>, and <code>CD</code> decrypts to <code>AB</code>. This structural symmetry leaks plaintext relationships.</li>
+            <li><strong>Self-Encryption Impossibility:</strong> A letter can <em>never</em> encrypt to itself ($E(x) \neq x$). This negative property leaks immense structural information during crib-dragging.</li>
+            <li><strong>Known-Plaintext &amp; Ciphertext-Only Attacks:</strong> With only a few dozen known digraph pairs, cryptanalysts can set up linear systems over the row and column coordinates to reconstruct the entire 5&times;5 key matrix without trying all keys.</li>
+          </ul>
+        </div>
+      </div>
+    </article>
+
+    <!-- Footer -->
+    <footer>
+      Playfair Cipher Interactive Simulator &bull; Single File Self-Contained Implementation &bull; CIS Syllabus
+    </footer>
+  </div>
+
+  <!-- Application Logic -->
+  <script>
+    // State Management
+    const state = {
+      mode: 'encrypt',           // 'encrypt' | 'decrypt'
+      keyword: 'MONARCHY',
+      message: 'INSTRUMENTS',
+      filler: 'X',
+      matrix: [],               // 5x5 array of letters
+      keyLetterSet: new Set(),  // Set of letters belonging to keyword
+      posMap: {},               // letter -> { row, col }
+      preparedDigraphs: [],     // Array of [c1, c2]
+      steps: [],                // Array of step objects
+      currentStep: 0,           // -1: none/reset, 0..N-1: active step
+      isPlaying: false,
+      playTimer: null,
+      speedMs: 1200
+    };
+
+    // DOM Elements
+    const elements = {
+      themeToggleBtn: document.getElementById('themeToggleBtn'),
+      themeIconSun: document.getElementById('themeIconSun'),
+      themeIconMoon: document.getElementById('themeIconMoon'),
+      modeEncryptBtn: document.getElementById('modeEncryptBtn'),
+      modeDecryptBtn: document.getElementById('modeDecryptBtn'),
+      keywordInput: document.getElementById('keywordInput'),
+      fillerInput: document.getElementById('fillerInput'),
+      messageInput: document.getElementById('messageInput'),
+      messageLabelText: document.getElementById('messageLabelText'),
+      messageCharCount: document.getElementById('messageCharCount'),
+      keywordSanitizedHint: document.getElementById('keywordSanitizedHint'),
+      gridContainer: document.getElementById('gridContainer'),
+      matrixSvg: document.getElementById('matrixSvg'),
+      svgShapesGroup: document.getElementById('svgShapesGroup'),
+      digraphChipsList: document.getElementById('digraphChipsList'),
+      digraphPrepHint: document.getElementById('digraphPrepHint'),
+      stepCounterDisplay: document.getElementById('stepCounterDisplay'),
+      ruleBanner: document.getElementById('ruleBanner'),
+      rulePill: document.getElementById('rulePill'),
+      rulePairSummary: document.getElementById('rulePairSummary'),
+      ruleExplanationText: document.getElementById('ruleExplanationText'),
+      outputDisplay: document.getElementById('outputDisplay'),
+      outputLabelText: document.getElementById('outputLabelText'),
+      outputStats: document.getElementById('outputStats'),
+      cipherTableBody: document.getElementById('cipherTableBody'),
+      playPauseBtn: document.getElementById('playPauseBtn'),
+      playIcon: document.getElementById('playIcon'),
+      pauseIcon: document.getElementById('pauseIcon'),
+      playPauseText: document.getElementById('playPauseText'),
+      prevBtn: document.getElementById('prevBtn'),
+      nextBtn: document.getElementById('nextBtn'),
+      resetBtn: document.getElementById('resetBtn'),
+      showResultBtn: document.getElementById('showResultBtn'),
+      speedSelect: document.getElementById('speedSelect'),
+      fillerLetterDisplay: document.getElementById('fillerLetterDisplay'),
+      fillerNote: document.getElementById('fillerNote')
+    };
+
+    // --- 1. Theme Management ---
+    function initTheme() {
+      const saved = localStorage.getItem('playfair_theme');
+      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const theme = saved || (prefersDark ? 'dark' : 'light');
+      applyTheme(theme);
+    }
+
+    function applyTheme(theme) {
+      document.body.setAttribute('data-theme', theme);
+      localStorage.setItem('playfair_theme', theme);
+      if (theme === 'dark') {
+        elements.themeIconSun.style.display = 'block';
+        elements.themeIconMoon.style.display = 'none';
+      } else {
+        elements.themeIconSun.style.display = 'none';
+        elements.themeIconMoon.style.display = 'block';
+      }
+      // Re-render SVG if a step is active to ensure crisp styling
+      if (state.currentStep >= 0 && state.currentStep < state.steps.length) {
+        drawSvgHighlight(state.steps[state.currentStep]);
+      }
+    }
+
+    elements.themeToggleBtn.addEventListener('click', () => {
+      const current = document.body.getAttribute('data-theme') || 'light';
+      applyTheme(current === 'dark' ? 'light' : 'dark');
+    });
+
+    // --- 2. String Sanitization & Utilities ---
+    function sanitizeKeyword(raw) {
+      // Keep letters only, uppercase, J -> I
+      return (raw || '').toUpperCase().replace(/[^A-Z]/g, '').replace(/J/g, 'I');
+    }
+
+    function sanitizeMessage(raw) {
+      // Keep letters only, uppercase, J -> I
+      return (raw || '').toUpperCase().replace(/[^A-Z]/g, '').replace(/J/g, 'I');
+    }
+
+    function sanitizeFiller(raw) {
+      let cleaned = (raw || 'X').toUpperCase().replace(/[^A-Z]/g, '').replace(/J/g, 'I');
+      return cleaned.length > 0 ? cleaned[0] : 'X';
+    }
+
+    // --- 3. Key Matrix Generation (5x5) ---
+    function buildMatrix(sanitizedKeyword) {
+      const alphabet = "ABCDEFGHIKLMNOPQRSTUVWXYZ"; // Note: J is omitted, merged into I
+      const keyLetters = [];
+      const seen = new Set();
+
+      // Keyword letters first
+      for (const char of sanitizedKeyword) {
+        if (!seen.has(char)) {
+          seen.add(char);
+          keyLetters.push(char);
+        }
+      }
+
+      const keySet = new Set(keyLetters);
+
+      // Remaining alphabet letters
+      for (const char of alphabet) {
+        if (!seen.has(char)) {
+          seen.add(char);
+          keyLetters.push(char);
+        }
+      }
+
+      // 5x5 grid & position lookup
+      const matrix = [];
+      const posMap = {};
+
+      for (let r = 0; r < 5; r++) {
+        const row = [];
+        for (let c = 0; c < 5; c++) {
+          const letter = keyLetters[r * 5 + c];
+          row.push(letter);
+          posMap[letter] = { row: r, col: c };
+        }
+        matrix.push(row);
+      }
+
+      return { matrix, keySet, posMap };
+    }
+
+    // --- 4. Digraph Preparation ---
+    function prepareDigraphs(cleanMsg, filler, mode) {
+      if (!cleanMsg) return [];
+      
+      const digraphs = [];
+      const f = filler || 'X';
+
+      if (mode === 'encrypt') {
+        let i = 0;
+        while (i < cleanMsg.length) {
+          const c1 = cleanMsg[i];
+          if (i + 1 < cleanMsg.length) {
+            const c2 = cleanMsg[i + 1];
+            if (c1 === c2) {
+              // Pair has two identical letters: insert filler between them
+              // If c1 itself is the filler letter, use alternative filler 'Q' (or 'Z' if filler is 'Q')
+              const actualFiller = (c1 === f) ? (f === 'X' ? 'Q' : 'X') : f;
+              digraphs.push([c1, actualFiller]);
+              i += 1; // Only advance 1 letter; c2 becomes the first letter of next pair
+            } else {
+              digraphs.push([c1, c2]);
+              i += 2;
+            }
+          } else {
+            // Odd trailing letter: pad with filler
+            const actualFiller = (c1 === f) ? (f === 'X' ? 'Q' : 'X') : f;
+            digraphs.push([c1, actualFiller]);
+            i += 1;
+          }
+        }
+      } else {
+        // Decrypt mode: input is ciphertext, split into 2-letter blocks
+        for (let i = 0; i < cleanMsg.length; i += 2) {
+          const c1 = cleanMsg[i];
+          const c2 = (i + 1 < cleanMsg.length) ? cleanMsg[i + 1] : f;
+          digraphs.push([c1, c2]);
+        }
+      }
+
+      return digraphs;
+    }
+
+    // --- 5. Cipher Logic (Encrypt / Decrypt rules) ---
+    function calculateSteps(digraphs, matrix, posMap, mode) {
+      const steps = [];
+      let cumulativeOutput = "";
+
+      for (let idx = 0; idx < digraphs.length; idx++) {
+        const [in1, in2] = digraphs[idx];
+        const p1 = posMap[in1] || { row: 0, col: 0 };
+        const p2 = posMap[in2] || { row: 0, col: 0 };
+
+        let out1 = '';
+        let out2 = '';
+        let rule = '';
+        let ruleDescription = '';
+        let coordDetail = '';
+
+        if (p1.row === p2.row) {
+          // SAME ROW RULE
+          rule = 'Same Row';
+          const r = p1.row;
+          if (mode === 'encrypt') {
+            const newC1 = (p1.col + 1) % 5;
+            const newC2 = (p2.col + 1) % 5;
+            out1 = matrix[r][newC1];
+            out2 = matrix[r][newC2];
+            ruleDescription = `Both letters are in Row ${r}. Shift each 1 step RIGHT (with wrap-around).`;
+            coordDetail = `R${r}: C${p1.col} &rarr; C${newC1}, C${p2.col} &rarr; C${newC2}`;
+          } else {
+            const newC1 = (p1.col - 1 + 5) % 5;
+            const newC2 = (p2.col - 1 + 5) % 5;
+            out1 = matrix[r][newC1];
+            out2 = matrix[r][newC2];
+            ruleDescription = `Both letters are in Row ${r}. Shift each 1 step LEFT (with wrap-around).`;
+            coordDetail = `R${r}: C${p1.col} &rarr; C${newC1}, C${p2.col} &rarr; C${newC2}`;
+          }
+        } else if (p1.col === p2.col) {
+          // SAME COLUMN RULE
+          rule = 'Same Column';
+          const c = p1.col;
+          if (mode === 'encrypt') {
+            const newR1 = (p1.row + 1) % 5;
+            const newR2 = (p2.row + 1) % 5;
+            out1 = matrix[newR1][c];
+            out2 = matrix[newR2][c];
+            ruleDescription = `Both letters are in Column ${c}. Shift each 1 step DOWN (with wrap-around).`;
+            coordDetail = `C${c}: R${p1.row} &rarr; R${newR1}, R${p2.row} &rarr; R${newR2}`;
+          } else {
+            const newR1 = (p1.row - 1 + 5) % 5;
+            const newR2 = (p2.row - 1 + 5) % 5;
+            out1 = matrix[newR1][c];
+            out2 = matrix[newR2][c];
+            ruleDescription = `Both letters are in Column ${c}. Shift each 1 step UP (with wrap-around).`;
+            coordDetail = `C${c}: R${p1.row} &rarr; R${newR1}, R${p2.row} &rarr; R${newR2}`;
+          }
+        } else {
+          // RECTANGLE RULE
+          rule = 'Rectangle';
+          // Same row as self, column of the other letter
+          out1 = matrix[p1.row][p2.col];
+          out2 = matrix[p2.row][p1.col];
+          ruleDescription = `Letters form a rectangle at (R${p1.row}, C${p1.col}) and (R${p2.row}, C${p2.col}). Swap columns within the same row.`;
+          coordDetail = `(R${p1.row}, C${p1.col}) &rarr; (R${p1.row}, C${p2.col}) &amp; (R${p2.row}, C${p2.col}) &rarr; (R${p2.row}, C${p1.col})`;
+        }
+
+        cumulativeOutput += (out1 + out2);
+
+        steps.push({
+          index: idx,
+          in1,
+          in2,
+          pos1: p1,
+          pos2: p2,
+          out1,
+          out2,
+          outPos1: posMap[out1] || { row: p1.row, col: p2.col },
+          outPos2: posMap[out2] || { row: p2.row, col: p1.col },
+          rule,
+          ruleDescription,
+          coordDetail,
+          pairOutput: out1 + out2,
+          cumulativeOutput
+        });
+      }
+
+      return steps;
+    }
+
+    // --- 6. Render UI Components ---
+    function renderMatrixGrid() {
+      // Clear existing cells (keeping header row)
+      const container = elements.gridContainer;
+      while (container.children.length > 6) {
+        container.removeChild(container.lastChild);
+      }
+
+      for (let r = 0; r < 5; r++) {
+        // Row header label (R0 - R4)
+        const rowHeader = document.createElement('div');
+        rowHeader.className = 'header-cell';
+        rowHeader.textContent = `R${r}`;
+        container.appendChild(rowHeader);
+
+        for (let c = 0; c < 5; c++) {
+          const letter = state.matrix[r][c];
+          const isKey = state.keyLetterSet.has(letter);
+
+          const cell = document.createElement('div');
+          cell.className = `matrix-cell ${isKey ? 'is-keyword' : ''}`;
+          cell.id = `cell_${r}_${c}`;
+          cell.setAttribute('data-letter', letter);
+          cell.setAttribute('data-row', r);
+          cell.setAttribute('data-col', c);
+          cell.setAttribute('role', 'gridcell');
+          cell.setAttribute('aria-label', `Letter ${letter} at row ${r}, column ${c}`);
+
+          cell.innerHTML = `
+            <span>${letter}</span>
+            <span class="coord-tag">${r},${c}</span>
+          `;
+
+          container.appendChild(cell);
+        }
+      }
+    }
+
+    function renderDigraphChips() {
+      const container = elements.digraphChipsList;
+      container.innerHTML = '';
+
+      if (state.preparedDigraphs.length === 0) {
+        container.innerHTML = `<span style="font-size: 0.8rem; color: var(--text-faint); font-family: var(--font-mono);">No digraphs generated yet</span>`;
+        return;
+      }
+
+      state.preparedDigraphs.forEach((pair, idx) => {
+        const chip = document.createElement('button');
+        chip.type = 'button';
+        chip.className = 'digraph-chip';
+        chip.id = `chip_${idx}`;
+        chip.innerHTML = `${pair[0]}${pair[1]}<span class="chip-sub">#${idx + 1}</span>`;
+        chip.title = `Click to inspect Pair #${idx + 1} (${pair[0]}${pair[1]})`;
+        chip.onclick = () => jumpToStep(idx);
+        container.appendChild(chip);
+      });
+    }
+
+    function renderTable() {
+      const tbody = elements.cipherTableBody;
+      tbody.innerHTML = '';
+
+      if (state.steps.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="empty-state">Enter a message and keyword to generate table</td></tr>`;
+        return;
+      }
+
+      state.steps.forEach((step, idx) => {
+        const row = document.createElement('tr');
+        row.id = `tableRow_${idx}`;
+        row.innerHTML = `
+          <td>#${idx + 1}</td>
+          <td><strong>${step.in1} ${step.in2}</strong></td>
+          <td><span class="rule-pill" style="font-size: 0.65rem;">${step.rule}</span></td>
+          <td style="font-size: 0.75rem;">${step.coordDetail}</td>
+          <td><strong style="color: var(--color-out1);">${step.out1} ${step.out2}</strong></td>
+          <td style="font-family: var(--font-mono); font-weight: 700;">${step.cumulativeOutput}</td>
+        `;
+        row.style.cursor = 'pointer';
+        row.title = `Click to step to Pair #${idx + 1}`;
+        row.onclick = () => jumpToStep(idx);
+        tbody.appendChild(row);
+      });
+    }
+
+    // --- 7. SVG Visualizer & Grid Highlights ---
+    function clearHighlights() {
+      // Clear matrix cell highlight classes
+      document.querySelectorAll('.matrix-cell').forEach(cell => {
+        cell.classList.remove('cell-in-1', 'cell-in-2', 'cell-out-1', 'cell-out-2');
+      });
+
+      // Clear SVG overlay elements
+      elements.svgShapesGroup.innerHTML = '';
+
+      // Clear chip highlights
+      document.querySelectorAll('.digraph-chip').forEach(chip => {
+        chip.classList.remove('active');
+      });
+
+      // Clear table active rows
+      document.querySelectorAll('#cipherTableBody tr').forEach(row => {
+        row.classList.remove('active-row');
+      });
+    }
+
+    function getCellCenter(row, col) {
+      const cell = document.getElementById(`cell_${row}_${col}`);
+      const wrapper = elements.matrixWrapper;
+      if (!cell || !wrapper) return { x: 0, y: 0, width: 0, height: 0 };
+
+      const cellRect = cell.getBoundingClientRect();
+      const wrapRect = wrapper.getBoundingClientRect();
+
+      return {
+        x: cellRect.left - wrapRect.left + cellRect.width / 2,
+        y: cellRect.top - wrapRect.top + cellRect.height / 2,
+        left: cellRect.left - wrapRect.left,
+        top: cellRect.top - wrapRect.top,
+        width: cellRect.width,
+        height: cellRect.height
+      };
+    }
+
+    function drawSvgHighlight(step) {
+      elements.svgShapesGroup.innerHTML = '';
+      if (!step) return;
+
+      const p1 = step.pos1;
+      const p2 = step.pos2;
+      const o1 = step.outPos1;
+      const o2 = step.outPos2;
+
+      const cIn1 = getCellCenter(p1.row, p1.col);
+      const cIn2 = getCellCenter(p2.row, p2.col);
+      const cOut1 = getCellCenter(o1.row, o1.col);
+      const cOut2 = getCellCenter(o2.row, o2.col);
+
+      if (step.rule === 'Rectangle') {
+        // Draw Rectangle bounding box
+        const minX = Math.min(cIn1.left, cIn2.left) - 2;
+        const maxX = Math.max(cIn1.left + cIn1.width, cIn2.left + cIn2.width) + 2;
+        const minY = Math.min(cIn1.top, cIn2.top) - 2;
+        const maxY = Math.max(cIn1.top + cIn1.height, cIn2.top + cIn2.height) + 2;
+
+        const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        rect.setAttribute("x", minX);
+        rect.setAttribute("y", minY);
+        rect.setAttribute("width", maxX - minX);
+        rect.setAttribute("height", maxY - minY);
+        rect.setAttribute("rx", "8");
+        rect.setAttribute("fill", "var(--svg-rect-fill)");
+        rect.setAttribute("stroke", "var(--svg-rect-stroke)");
+        rect.setAttribute("stroke-width", "2");
+        rect.setAttribute("stroke-dasharray", "5,5");
+        elements.svgShapesGroup.appendChild(rect);
+
+        // Arrows from Input 1 -> Output 1
+        const line1 = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line1.setAttribute("x1", cIn1.x);
+        line1.setAttribute("y1", cIn1.y);
+        line1.setAttribute("x2", cOut1.x);
+        line1.setAttribute("y2", cOut1.y);
+        line1.setAttribute("stroke", "var(--color-out1)");
+        line1.setAttribute("stroke-width", "2.5");
+        line1.setAttribute("marker-end", "url(#arrowhead-out1)");
+        elements.svgShapesGroup.appendChild(line1);
+
+        // Arrows from Input 2 -> Output 2
+        const line2 = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line2.setAttribute("x1", cIn2.x);
+        line2.setAttribute("y1", cIn2.y);
+        line2.setAttribute("x2", cOut2.x);
+        line2.setAttribute("y2", cOut2.y);
+        line2.setAttribute("stroke", "var(--color-out2)");
+        line2.setAttribute("stroke-width", "2.5");
+        line2.setAttribute("marker-end", "url(#arrowhead-out2)");
+        elements.svgShapesGroup.appendChild(line2);
+
+      } else if (step.rule === 'Same Row') {
+        // Horizontal band across row
+        const rowLeftCell = getCellCenter(p1.row, 0);
+        const rowRightCell = getCellCenter(p1.row, 4);
+
+        const band = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        band.setAttribute("x", rowLeftCell.left - 4);
+        band.setAttribute("y", rowLeftCell.top - 4);
+        band.setAttribute("width", (rowRightCell.left + rowRightCell.width) - rowLeftCell.left + 8);
+        band.setAttribute("height", rowLeftCell.height + 8);
+        band.setAttribute("rx", "8");
+        band.setAttribute("fill", "var(--svg-rect-fill)");
+        band.setAttribute("stroke", "var(--svg-rect-stroke)");
+        band.setAttribute("stroke-width", "2");
+        elements.svgShapesGroup.appendChild(band);
+
+        // Directional curved or straight arrows
+        drawShiftArrow(cIn1, cOut1, 'row', step.pos1.col, step.outPos1.col, 'var(--color-out1)', '#arrowhead-out1');
+        drawShiftArrow(cIn2, cOut2, 'row', step.pos2.col, step.outPos2.col, 'var(--color-out2)', '#arrowhead-out2');
+
+      } else if (step.rule === 'Same Column') {
+        // Vertical band across column
+        const colTopCell = getCellCenter(0, p1.col);
+        const colBottomCell = getCellCenter(4, p1.col);
+
+        const band = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        band.setAttribute("x", colTopCell.left - 4);
+        band.setAttribute("y", colTopCell.top - 4);
+        band.setAttribute("width", colTopCell.width + 8);
+        band.setAttribute("height", (colBottomCell.top + colBottomCell.height) - colTopCell.top + 8);
+        band.setAttribute("rx", "8");
+        band.setAttribute("fill", "var(--svg-rect-fill)");
+        band.setAttribute("stroke", "var(--svg-rect-stroke)");
+        band.setAttribute("stroke-width", "2");
+        elements.svgShapesGroup.appendChild(band);
+
+        // Directional curved or straight arrows
+        drawShiftArrow(cIn1, cOut1, 'col', step.pos1.row, step.outPos1.row, 'var(--color-out1)', '#arrowhead-out1');
+        drawShiftArrow(cIn2, cOut2, 'col', step.pos2.row, step.outPos2.row, 'var(--color-out2)', '#arrowhead-out2');
+      }
+    }
+
+    function drawShiftArrow(cFrom, cTo, axis, idxFrom, idxTo, strokeColor, markerId) {
+      const isWrap = Math.abs(idxFrom - idxTo) > 1;
+      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+
+      if (!isWrap) {
+        path.setAttribute("d", `M ${cFrom.x} ${cFrom.y} L ${cTo.x} ${cTo.y}`);
+      } else {
+        // Curved wrap-around arc
+        if (axis === 'row') {
+          const arcOffset = (idxFrom > idxTo) ? 22 : -22;
+          path.setAttribute("d", `M ${cFrom.x} ${cFrom.y} Q ${(cFrom.x + cTo.x) / 2} ${cFrom.y + arcOffset} ${cTo.x} ${cTo.y}`);
+        } else {
+          const arcOffset = (idxFrom > idxTo) ? 22 : -22;
+          path.setAttribute("d", `M ${cFrom.x} ${cFrom.y} Q ${cFrom.x + arcOffset} ${(cFrom.y + cTo.y) / 2} ${cTo.x} ${cTo.y}`);
+        }
+      }
+
+      path.setAttribute("fill", "none");
+      path.setAttribute("stroke", strokeColor);
+      path.setAttribute("stroke-width", "2.5");
+      path.setAttribute("marker-end", `url(${markerId})`);
+      elements.svgShapesGroup.appendChild(path);
+    }
+
+    // --- 8. Step Player & Animation Controller ---
+    function updateActiveStepView() {
+      clearHighlights();
+
+      const total = state.steps.length;
+      elements.stepCounterDisplay.textContent = `Step ${state.currentStep + 1} of ${total}`;
+      elements.outputStats.textContent = `${state.currentStep + 1} / ${total} pairs processed`;
+
+      if (state.currentStep < 0 || state.currentStep >= total) {
+        // Reset or Empty State
+        elements.rulePill.textContent = "READY";
+        elements.rulePill.style.background = "var(--accent-soft)";
+        elements.rulePill.style.color = "var(--accent-primary)";
+        elements.rulePairSummary.textContent = total > 0 ? "Ready to begin simulation" : "No input message";
+        elements.ruleExplanationText.textContent = total > 0 
+          ? "Click 'Next Pair' or 'Auto Play' to step through the digraph encryption process." 
+          : "Please enter a keyword and message to start.";
+        elements.outputDisplay.innerHTML = `<span style="color: var(--text-faint); font-size: 0.9rem; font-weight: 400;">(Output appears step-by-step)</span>`;
+        return;
+      }
+
+      const step = state.steps[state.currentStep];
+
+      // 1. Highlight Cells in Matrix
+      const cellIn1 = document.getElementById(`cell_${step.pos1.row}_${step.pos1.col}`);
+      const cellIn2 = document.getElementById(`cell_${step.pos2.row}_${step.pos2.col}`);
+      const cellOut1 = document.getElementById(`cell_${step.outPos1.row}_${step.outPos1.col}`);
+      const cellOut2 = document.getElementById(`cell_${step.outPos2.row}_${step.outPos2.col}`);
+
+      if (cellIn1) cellIn1.classList.add('cell-in-1');
+      if (cellIn2) cellIn2.classList.add('cell-in-2');
+      if (cellOut1) cellOut1.classList.add('cell-out-1');
+      if (cellOut2) cellOut2.classList.add('cell-out-2');
+
+      // 2. Draw SVG highlight
+      drawSvgHighlight(step);
+
+      // 3. Highlight Digraph Chip
+      state.preparedDigraphs.forEach((_, i) => {
+        const chip = document.getElementById(`chip_${i}`);
+        if (!chip) return;
+        if (i < state.currentStep) {
+          chip.classList.add('completed');
+        } else if (i === state.currentStep) {
+          chip.classList.add('active');
+          chip.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        }
+      });
+
+      // 4. Update Rule Banner
+      elements.rulePill.textContent = step.rule.toUpperCase() + " RULE";
+      elements.rulePairSummary.innerHTML = `Pair #${step.index + 1}: <span style="color: var(--color-in1);">${step.in1}</span><span style="color: var(--color-in2);">${step.in2}</span> &rarr; <span style="color: var(--color-out1);">${step.out1}</span><span style="color: var(--color-out2);">${step.out2}</span>`;
+      elements.ruleExplanationText.innerHTML = `<strong>${step.rule} Rule:</strong> ${step.ruleDescription} <br><span style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted);">${step.coordDetail}</span>`;
+
+      // 5. Update Output Display Token Stream
+      let outputHtml = '';
+      for (let i = 0; i <= state.currentStep; i++) {
+        const s = state.steps[i];
+        const isLatest = (i === state.currentStep);
+        outputHtml += `<span class="output-pair-token ${isLatest ? 'latest' : ''}">${s.out1}${s.out2}</span> `;
+      }
+      elements.outputDisplay.innerHTML = outputHtml;
+
+      // 6. Highlight Table Row
+      state.steps.forEach((_, i) => {
+        const row = document.getElementById(`tableRow_${i}`);
+        if (row) {
+          if (i === state.currentStep) {
+            row.classList.add('active-row');
+            row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          } else {
+            row.classList.remove('active-row');
+          }
+        }
+      });
+    }
+
+    function nextStep() {
+      if (state.steps.length === 0) return;
+      if (state.currentStep < state.steps.length - 1) {
+        state.currentStep++;
+        updateActiveStepView();
+      } else {
+        pause();
+      }
+    }
+
+    function prevStep() {
+      if (state.steps.length === 0) return;
+      if (state.currentStep > 0) {
+        state.currentStep--;
+        updateActiveStepView();
+      } else if (state.currentStep === 0) {
+        state.currentStep = -1;
+        updateActiveStepView();
+      }
+    }
+
+    function jumpToStep(stepIdx) {
+      if (stepIdx >= 0 && stepIdx < state.steps.length) {
+        pause();
+        state.currentStep = stepIdx;
+        updateActiveStepView();
+      }
+    }
+
+    function showResult() {
+      pause();
+      if (state.steps.length > 0) {
+        state.currentStep = state.steps.length - 1;
+        updateActiveStepView();
+      }
+    }
+
+    function resetAnimation() {
+      pause();
+      state.currentStep = -1;
+      updateActiveStepView();
+    }
+
+    function togglePlayPause() {
+      if (state.isPlaying) {
+        pause();
+      } else {
+        play();
+      }
+    }
+
+    function play() {
+      if (state.steps.length === 0) return;
+      if (state.currentStep >= state.steps.length - 1) {
+        state.currentStep = -1; // restart from beginning if at the end
+      }
+
+      state.isPlaying = true;
+      elements.playIcon.style.display = 'none';
+      elements.pauseIcon.style.display = 'block';
+      elements.playPauseText.textContent = 'Pause';
+      elements.playPauseBtn.classList.remove('btn-primary');
+      elements.playPauseBtn.style.background = 'var(--color-out2)';
+      elements.playPauseBtn.style.borderColor = 'var(--color-out2)';
+      elements.playPauseBtn.style.color = '#fff';
+
+      // Step immediately if reset
+      if (state.currentStep === -1) {
+        nextStep();
+      }
+
+      clearInterval(state.playTimer);
+      state.playTimer = setInterval(() => {
+        if (state.currentStep < state.steps.length - 1) {
+          nextStep();
+        } else {
+          pause();
+        }
+      }, state.speedMs);
+    }
+
+    function pause() {
+      state.isPlaying = false;
+      clearInterval(state.playTimer);
+      state.playTimer = null;
+      elements.playIcon.style.display = 'block';
+      elements.pauseIcon.style.display = 'none';
+      elements.playPauseText.textContent = 'Auto Play';
+      elements.playPauseBtn.classList.add('btn-primary');
+      elements.playPauseBtn.style.background = '';
+      elements.playPauseBtn.style.borderColor = '';
+      elements.playPauseBtn.style.color = '';
+    }
+
+    function updateSpeed() {
+      state.speedMs = parseInt(elements.speedSelect.value, 10) || 1200;
+      if (state.isPlaying) {
+        clearInterval(state.playTimer);
+        state.playTimer = setInterval(() => {
+          if (state.currentStep < state.steps.length - 1) {
+            nextStep();
+          } else {
+            pause();
+          }
+        }, state.speedMs);
+      }
+    }
+
+    // --- 9. Recompute & Synchronize Full Model ---
+    function recomputeAll(keepStep = false) {
+      // 1. Sanitize inputs
+      const rawKeyword = elements.keywordInput.value;
+      const rawMessage = elements.messageInput.value;
+      const rawFiller = elements.fillerInput.value;
+
+      state.keyword = sanitizeKeyword(rawKeyword);
+      state.message = sanitizeMessage(rawMessage);
+      state.filler = sanitizeFiller(rawFiller);
+
+      // Reflect sanitized filler in input
+      elements.fillerInput.value = state.filler;
+      elements.fillerLetterDisplay.textContent = state.filler;
+
+      // Update Char Count & Hint
+      elements.messageCharCount.textContent = `${state.message.length} cleaned letters`;
+      if (state.keyword.length === 0) {
+        elements.keywordSanitizedHint.textContent = "Empty keyword: standard A-Z alphabet grid";
+      } else {
+        elements.keywordSanitizedHint.textContent = `Clean key: ${state.keyword} (J &rarr; I)`;
+      }
+
+      // 2. Build 5x5 Key Matrix
+      const { matrix, keySet, posMap } = buildMatrix(state.keyword);
+      state.matrix = matrix;
+      state.keyLetterSet = keySet;
+      state.posMap = posMap;
+
+      // 3. Render Matrix Grid
+      renderMatrixGrid();
+
+      // 4. Digraph Preparation
+      state.preparedDigraphs = prepareDigraphs(state.message, state.filler, state.mode);
+      renderDigraphChips();
+
+      // Update Digraph Hint
+      if (state.mode === 'encrypt') {
+        elements.digraphPrepHint.textContent = `Padded with '${state.filler}' &bull; ${state.preparedDigraphs.length} pairs`;
+      } else {
+        elements.digraphPrepHint.textContent = `Direct pair segmentation &bull; ${state.preparedDigraphs.length} pairs`;
+      }
+
+      // 5. Calculate Steps
+      state.steps = calculateSteps(state.preparedDigraphs, state.matrix, state.posMap, state.mode);
+      renderTable();
+
+      // 6. Handle active step index
+      if (!keepStep) {
+        state.currentStep = state.steps.length > 0 ? 0 : -1;
+      } else {
+        if (state.currentStep >= state.steps.length) {
+          state.currentStep = state.steps.length - 1;
+        }
+      }
+
+      updateActiveStepView();
+    }
+
+    // --- 10. Mode Switching & Round-Trip Handlers ---
+    function setMode(newMode) {
+      if (state.mode === newMode) return;
+      pause();
+      state.mode = newMode;
+
+      if (newMode === 'encrypt') {
+        elements.modeEncryptBtn.classList.add('active');
+        elements.modeDecryptBtn.classList.remove('active');
+        elements.messageLabelText.textContent = "Plaintext Message";
+        elements.outputLabelText.textContent = "Cumulative Ciphertext Output";
+      } else {
+        elements.modeDecryptBtn.classList.add('active');
+        elements.modeEncryptBtn.classList.remove('active');
+        elements.messageLabelText.textContent = "Ciphertext Message";
+        elements.outputLabelText.textContent = "Cumulative Plaintext Output";
+      }
+
+      recomputeAll(false);
+    }
+
+    function useResultAsInput() {
+      if (state.steps.length === 0) return;
+      pause();
+
+      // Full cumulative output from the final step
+      const finalOutput = state.steps[state.steps.length - 1].cumulativeOutput;
+      if (!finalOutput) return;
+
+      // Feed into message box
+      elements.messageInput.value = finalOutput;
+
+      // Toggle mode
+      const targetMode = state.mode === 'encrypt' ? 'decrypt' : 'encrypt';
+      setMode(targetMode);
+
+      // Temporary visual glow on the input field
+      elements.messageInput.style.borderColor = 'var(--accent-primary)';
+      elements.messageInput.style.boxShadow = '0 0 10px var(--accent-soft)';
+      setTimeout(() => {
+        elements.messageInput.style.borderColor = '';
+        elements.messageInput.style.boxShadow = '';
+      }, 1500);
+    }
+
+    function copyOutputText() {
+      if (state.steps.length === 0) return;
+      const text = state.steps[state.steps.length - 1].cumulativeOutput;
+      if (!text) return;
+
+      navigator.clipboard.writeText(text).then(() => {
+        const copyBtn = document.getElementById('copyResultBtn');
+        const origHtml = copyBtn.innerHTML;
+        copyBtn.innerHTML = `
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          Copied!
+        `;
+        setTimeout(() => {
+          copyBtn.innerHTML = origHtml;
+        }, 1500);
+      });
+    }
+
+    function applyPreset(key, msg) {
+      pause();
+      elements.keywordInput.value = key;
+      elements.messageInput.value = msg;
+      setMode('encrypt');
+    }
+
+    // --- 11. Event Listeners & Initialization ---
+    elements.keywordInput.addEventListener('input', () => {
+      pause();
+      recomputeAll(false);
+    });
+
+    elements.messageInput.addEventListener('input', () => {
+      pause();
+      recomputeAll(false);
+    });
+
+    elements.fillerInput.addEventListener('input', () => {
+      pause();
+      recomputeAll(false);
+    });
+
+    // Window resize event to recalculate SVG paths accurately
+    window.addEventListener('resize', () => {
+      if (state.currentStep >= 0 && state.currentStep < state.steps.length) {
+        drawSvgHighlight(state.steps[state.currentStep]);
+      }
+    });
+
+    // Keyboard Shortcuts for accessibility & ease of use:
+    // Space: Play/Pause, ArrowRight: Next, ArrowLeft: Prev, R: Reset
+    window.addEventListener('keydown', (e) => {
+      if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
+        return; // Don't trigger shortcuts when typing in inputs
+      }
+
+      if (e.code === 'Space') {
+        e.preventDefault();
+        togglePlayPause();
+      } else if (e.code === 'ArrowRight') {
+        e.preventDefault();
+        pause();
+        nextStep();
+      } else if (e.code === 'ArrowLeft') {
+        e.preventDefault();
+        pause();
+        prevStep();
+      } else if (e.key === 'r' || e.key === 'R') {
+        e.preventDefault();
+        resetAnimation();
+      }
+    });
+
+    // Initial Load
+    initTheme();
+    recomputeAll(false);
+  </script>
+</body>
+</html>
